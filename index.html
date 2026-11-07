@@ -426,7 +426,7 @@ function abrirBold(j){
   const s=document.createElement("script");s.src="https://checkout.bold.co/library/boldPaymentButton.js";
   const at={"data-bold-button":"dark-L","data-order-id":j.orderId,"data-currency":"COP","data-amount":String(j.amount),"data-api-key":j.apiKey,"data-integrity-signature":j.signature||j.integritySignature||j.hash,"data-redirection-url":j.redirectionUrl||location.origin+"/","data-description":j.description||"NeuroGuIA"};
   Object.entries(at).forEach(([k,v])=>v&&s.setAttribute(k,v));box.appendChild(s);
-  let n=0;const t=setInterval(()=>{const b=box.querySelector("button");if(b||++n>48){clearInterval(t);if(b)b.click();else toast("No se pudo abrir la pasarela de pago. Intente de nuevo.",1);}},250);
+  let n=0;const t=setInterval(()=>{const b=box.querySelector("button")||box.querySelector("bold-payment-button")?.shadowRoot?.querySelector("button");if(b||++n>48){clearInterval(t);if(b)b.click();else toast("No se pudo abrir la pasarela de pago. Intente de nuevo.",1);}},250);
 }
 /* ================= Estado y almacenamiento ================= */
 const SECC=[["Día a día",[["Inicio","🏠"],["Diario","📔"],["Plan de crisis","🆘"],["Medicamentos","💊"],["Recordatorios","⏰"]]],
