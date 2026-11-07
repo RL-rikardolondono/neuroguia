@@ -175,7 +175,8 @@ tr.nuevo td{background:#E3F6F2}
 .planes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.9rem}
 .plan{background:#fff;border:1.5px solid #DCE5EE;border-radius:16px;padding:1rem}
 .plan.actual{border:2.5px solid #14A38B;background:#F3FBF9}
-.entrada{max-width:440px;margin:1.5rem auto;background:#fff;border-radius:20px;padding:1.5rem;box-shadow:0 10px 40px rgba(11,79,138,.12)}
+.foto-hero{width:calc(100% + 3rem);max-width:none;margin:-1.5rem -1.5rem 1rem;height:200px;object-fit:cover;border-radius:20px 20px 0 0;display:block}.foto-banda{width:100%;height:180px;object-fit:cover;border-radius:14px;display:block;margin-bottom:1rem}
+.entrada{overflow:hidden;max-width:440px;margin:1.5rem auto;background:#fff;border-radius:20px;padding:1.5rem;box-shadow:0 10px 40px rgba(11,79,138,.12)}
 .entrada h1{justify-content:center;text-align:center}
 .entrada .lema{text-align:center;color:#5D6B78;margin-top:-.3rem}
 .ojo{position:relative}
@@ -621,7 +622,7 @@ const ocultarCorreo=c=>{const [u,d]=String(c||"").split("@");if(!d)return "";ret
 function ojo(id,ph,ac){return `<div class="ojo"><input type="password" id="${id}" ${ph?`placeholder="${ph}"`:""} autocomplete="${ac||"current-password"}" minlength="10" required><button type="button" data-ojo="${id}">Mostrar</button></div>`;}
 function vEntrada(){
   const c=S.cuenta,e=S.ent||(SRV?"inicio":c?.pass?"login":c?.consent?"crearClave":"inicio");
-  const cab=`<div class="entrada"><h1>🧩 Neuro<span style="color:#14A38B">GuIA</span></h1><p class="lema">Acompañamiento para familias en neurodesarrollo</p>`;
+  const cab=`<div class="entrada">${e==="inicio"?`<img class="foto-hero" src="https://images.unsplash.com/photo-1589169011402-8b2cbd1ee593?w=900&h=520&q=70&auto=format&fit=crop" alt="Mamá abraza a su hija, que ríe, en el sofá de la casa" onerror="this.remove()">`:""}<h1>🧩 Neuro<span style="color:#14A38B">GuIA</span></h1><p class="lema">Acompañamiento para familias en neurodesarrollo</p>`;
   const pie=(e!=="inicio"?`<div style="border-top:1px solid #DCE5EE;margin-top:1.2rem;padding-top:1rem;text-align:center"><p class="muted" style="margin:0 auto .5rem">¿Solo quiere conocer la app?</p><button class="btn azul" id="entDemo">Probar la demostración</button></div>`:"")+`<p class="muted" style="font-size:.78rem;text-align:center;margin-top:1.2rem">Una app de SkyNet Genesis · contacto@skynetgenesis.com · WhatsApp 304 437 5758</p></div>`;
   if(e==="inicio")return cab+`<p style="text-align:center">Diario, plan de crisis, medicamentos con alarma, evaluación mensual, estadísticas y documentos para el colegio, en un solo lugar.</p><p style="text-align:center"><strong>🎁 15 días gratis, sin tarjeta.</strong></p>
     <div class="acciones" style="flex-direction:column"><button class="btn" data-ent="crear" style="font-size:1.1rem">Crear mi cuenta gratis</button><button class="btn sec" data-ent="login">Ya tengo cuenta: ingresar</button><button class="btn azul" id="entDemo">Probar la demostración</button></div>`+pie;
@@ -1332,7 +1333,7 @@ function vIps(){
   const k=kid();
   if(S.mode!=="nube")return `<div class="panel"><h2>Clínica Reina Elizabeth IPS</h2><p>La conexión con la IPS funciona solo en la versión en línea de NeuroGuIA.</p></div>`;
   const pl=S.cuenta?.plan,sol=S.misSol.slice().reverse(),ult=S.ultimaSol&&S.misSol.find(s=>s.id===S.ultimaSol);
-  return `${ult?`<div class="alert" style="border-color:var(--ok)"><strong>Solicitud recibida.</strong> Quedó registrada el ${fmt(ult.fecha)} a las ${new Date(ult.momento).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"})} en el Panel IPS de Clínica Reina Elizabeth. El estado cambiará aquí cuando la IPS la confirme.</div>`:""}
+  return `<img class="foto-banda" src="https://images.unsplash.com/photo-1758691463331-2ac00e6f676f?w=1000&h=420&q=70&auto=format&fit=crop" alt="Médico atiende a un niño acompañado por su mamá" onerror="this.remove()">${ult?`<div class="alert" style="border-color:var(--ok)"><strong>Solicitud recibida.</strong> Quedó registrada el ${fmt(ult.fecha)} a las ${new Date(ult.momento).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"})} en el Panel IPS de Clínica Reina Elizabeth. El estado cambiará aquí cuando la IPS la confirme.</div>`:""}
   ${panelCitasLibres()}<div class="panel"><h2>Clínica Reina Elizabeth IPS</h2>
    <p>Solicite valoración o seguimiento con medicina, psicología, neuropsicología y terapias, por telemedicina o presencial en Santa Marta.</p>
    ${pl==="Premium Plus"?`<p><span class="lvl b">Premium Plus</span> Su plan incluye una consulta presencial al mes con especialista en Santa Marta. Este mes: <strong>${seguimientoDisponible()?"disponible":"ya utilizada"}</strong>.</p>`:pl==="Premium"?`<p><span class="lvl b">Premium</span> Tiene atención prioritaria y descuento en consultas particulares. El plan Premium Plus incluye una consulta presencial al mes.</p>`:`<p class="muted">Las consultas se pagan aparte. El plan Premium Plus incluye una consulta presencial al mes en Santa Marta.</p>`}
