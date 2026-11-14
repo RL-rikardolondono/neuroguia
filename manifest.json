@@ -1,2 +1,11 @@
-{"name":"NeuroGuIA","short_name":"NeuroGuIA","description":"Acompañamiento para familias en neurodesarrollo","start_url":"/","display":"standalone","background_color":"#F4F8FB","theme_color":"#0B4F8A","lang":"es-CO",
- "icons":[{"src":"icono-192.png","sizes":"192x192","type":"image/png"},{"src":"icono-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}
+{"id":"/","name":"NeuroGuIA","short_name":"NeuroGuIA",
+ "description":"Acompañamiento para familias de niños con autismo, TDAH u otras condiciones del neurodesarrollo: diario, plan de crisis, medicamentos con alarma, evaluación mensual y documentos para el colegio.",
+ "start_url":"/","scope":"/","display":"standalone","orientation":"portrait","background_color":"#F4F8FB","theme_color":"#0B4F8A","lang":"es-CO","dir":"ltr",
+ "categories":["health","medical","education","lifestyle"],
+ "icons":[{"src":"icono-192.png","sizes":"192x192","type":"image/png"},{"src":"icono-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"icono-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}],
+ "screenshots":[
+  {"src":"captura-1.jpg","sizes":"1080x1920","type":"image/jpeg","form_factor":"narrow","label":"Inicio con el resumen del niño"},
+  {"src":"captura-2.jpg","sizes":"1080x1920","type":"image/jpeg","form_factor":"narrow","label":"Diario del día"},
+  {"src":"captura-3.jpg","sizes":"1080x1920","type":"image/jpeg","form_factor":"narrow","label":"Plan de crisis"},
+  {"src":"captura-4.jpg","sizes":"1080x1920","type":"image/jpeg","form_factor":"narrow","label":"Evaluación mes a mes"},
+  {"src":"captura-5.jpg","sizes":"1080x1920","type":"image/jpeg","form_factor":"narrow","label":"Medicamentos con alarma"}]}
