@@ -1,8 +1,11 @@
 [{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.skynetgenesis.neuroguia",
-        "sha256_cert_fingerprints": ["50:F5:AE:B8:A0:E1:98:91:38:80:56:2D:6F:38:1A:EA:44:96:B5:95:F1:C0:60:1A:BB:04:25:F5:F8:A7:BD:6F"]
-      }
-    }]
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.skynetgenesis.neuroguia",
+    "sha256_cert_fingerprints": [
+      "BB:9A:13:9F:6C:CC:B9:FD:41:16:4A:F9:3B:CC:D5:4C:8C:C3:C9:49:5A:42:8C:EB:39:99:C0:23:E3:52:F1:89",
+      "50:F5:AE:B8:A0:E1:98:91:38:80:56:2D:6F:38:1A:EA:44:96:B5:95:F1:C0:60:1A:BB:04:25:F5:F8:A7:BD:6F"
+    ]
+  }
+}]
