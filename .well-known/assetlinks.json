@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.skynetgenesis.neuroguia",
+        "sha256_cert_fingerprints": ["50:F5:AE:B8:A0:E1:98:91:38:80:56:2D:6F:38:1A:EA:44:96:B5:95:F1:C0:60:1A:BB:04:25:F5:F8:A7:BD:6F"]
+      }
+    }]
