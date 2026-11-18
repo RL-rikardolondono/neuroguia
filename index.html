@@ -924,7 +924,7 @@ function vCuenta(){
   const c=S.cuenta||{},lim=tieneMod("cuid")?8:3,LC=SRV?(S.cuidSrv||[]).filter(x=>x.rol!=="titular").map(x=>({id:x.id,nombre:x.nombre,parentesco:x.parentesco+(x.activo?"":" · invitación enviada"),correo:x.correo})):(c.cuidadores||[]),nc=LC.length;
   return `<div class="panel borde-azul"><h2><span class="ic">👤</span>Datos del acudiente</h2><form id="fCta"><div class="row"><div><label class="f" for="cA">Nombre del acudiente</label><input type="text" id="cA" value="${esc(c.acudiente)}" required></div>
    <div><label class="f" for="cT">Teléfono de contacto</label><input type="text" id="cT" value="${esc(c.telefono)}"></div></div>
-   <p class="muted" style="font-size:.9rem;margin-top:.6rem">Correo de ingreso: <strong>${esc(c.correo||"—")}</strong></p><div class="acciones"><button class="btn">Guardar datos</button></div></form></div>
+   <p class="muted" style="font-size:.9rem;margin-top:.6rem">Correo de ingreso: <strong>${esc(c.correo||SES?.usuario?.correo||"—")}</strong></p><div class="acciones"><button class="btn">Guardar datos</button></div></form></div>
   <div class="panel c1"><h2><span class="ic">🧒</span>Hijos registrados</h2><p class="muted">Una sola suscripción por familia, con hijos ilimitados. La fecha de inicio es el día desde el que se cuenta el seguimiento.</p>
    ${S.kids.map(k=>`<form class="adj" data-kidedit="${k.id}"><div class="row"><div><label class="f">Nombre</label><input type="text" name="nombre" value="${esc(k.nombre)}" required></div><div style="flex:0 1 110px"><label class="f">Edad</label><input type="number" name="edad" min="1" max="30" value="${esc(k.edad)}"></div>
     <div><label class="f">Nivel</label><select name="nivel">${["Preescolar","Primaria","Bachillerato","No escolarizado"].map(n=>`<option ${k.nivel===n?"selected":""}>${n}</option>`).join("")}</select></div></div>
@@ -994,7 +994,7 @@ function vPaciente(){
     ${A.length?`<p>${A.map(a=>`<span class="badge">${esc(a)}</span>`).join("")}</p>`:`<p class="muted">Sin alertas.</p>`}
     <ul><li>Crisis: <strong>${s.crisis??0}</strong> (periodo anterior: ${q.crisis??0})${s.trig?.length?`. Desencadenante más frecuente: ${esc(s.trig[0][0])}`:""}${s.ayuda?.length?`. Lo que más ayuda: ${esc(s.ayuda[0][0])}`:""}.</li>
     <li>Sueño promedio: ${s.sueNo??"—"} h en días sin crisis, ${s.sueCr??"—"} h en días con crisis.</li>
-    <li>Medicamentos administrados: ${s.adh===null||s.adh===undefined?"sin medicamentos activos":s.adh+"%"}.</li>
+    <li>Medicamentos administrados: ${s.adh===null||s.adh===undefined?"sin dosis registradas en el periodo":s.adh+"% de las dosis"}.</li>
     <li>Evaluación de los padres: ${e2.length?e2.map(e=>`${mesTxt(e.fecha)} ${sumT(totOf(e))}/120`).join(" → "):"no realizada"}.</li>
     <li>Logros registrados: ${s.logros?.length||0}. Último registro del diario: ${s.ultimo?fmt(s.ultimo):"ninguno"}.</li>
     ${u?`<li>Plan de la última evolución (${fmt(u.fecha)}): ${esc(u.plan||"—")}</li>`:""}</ul>
@@ -1002,7 +1002,7 @@ function vPaciente(){
   <div class="panel"><h2>Nueva evolución</h2><p class="muted" style="font-size:.9rem">Esta nota es un apoyo para la familia y el equipo. La atención debe registrarse también en la historia clínica oficial de la IPS.</p><form id="fEvo">
    <div class="row"><div><label class="f" for="eF">Fecha</label><input type="date" id="eF" value="${hoy()}"></div>
    <div><label class="f" for="eE">Especialidad</label><select id="eE">${ESPEC.map(x=>`<option>${x}</option>`).join("")}</select></div>
-   <div><label class="f" for="eTi">Tipo</label><select id="eTi"><option>Consulta incluida en Premium Plus</option><option>Consulta particular</option><option>Interconsulta</option><option>Control</option></select></div></div>
+   <div><label class="f" for="eTi">Tipo</label><select id="eTi"><option>Consulta particular</option><option>Consulta incluida en Premium Plus</option><option>Interconsulta</option><option>Control</option></select></div></div>
    <div class="row" style="margin-top:.6rem"><div><label class="f" for="eP">Profesional</label><input type="text" id="eP" required placeholder="Nombre completo"></div><div><label class="f" for="eRg">Registro profesional</label><input type="text" id="eRg" placeholder="Número de registro (ReTHUS / tarjeta)"></div></div>
    <label class="f" for="eM" style="margin-top:.6rem">Motivo de consulta</label><textarea id="eM"></textarea>
    <label class="f" for="eH" style="margin-top:.6rem">Evolución y hallazgos</label><textarea id="eH" required></textarea>
@@ -1307,7 +1307,7 @@ function pdfColegio(){
   B.push({small:"Documento orientador elaborado por la familia con NeuroGuIA, diseñada con inteligencia artificial, como aporte para la construcción del PIAR (Decreto 1421 de 2017). No constituye un diagnóstico clínico."});
   const ab=buildPDF("Orientaciones de la familia para el colegio",B);
   if(!ab){toast("No se pudo generar el PDF. Revise su conexión.");return;}
-  save_(`Orientaciones-colegio-${k.nombre.replace(/[^\wÁÉÍÓÚáéíóúñÑ]+/g,"-")}.pdf`,ab);
+  save_(`Orientaciones-colegio-${slugN(k.nombre)}.pdf`,ab);
 }
 function pdfMedico(){
   const k=kid(),L=k.diario.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,30),t=totals(k),D=doms(k);
@@ -1322,7 +1322,7 @@ function pdfMedico(){
    {small:"Resumen generado por la familia con NeuroGuIA para apoyar la consulta."}];
   const ab=buildPDF("Resumen para la consulta",B);
   if(!ab){toast("No se pudo generar el PDF. Revise su conexión.");return;}
-  save_(`Resumen-consulta-${k.nombre.replace(/[^\wÁÉÍÓÚáéíóúñÑ]+/g,"-")}.pdf`,ab);
+  save_(`Resumen-consulta-${slugN(k.nombre)}.pdf`,ab);
 }
 function vRes(){
   const k=kid(),F=S.resFiltro,L=k.resultados.filter(r=>F==="Todos"||r.tipo===F).slice().sort((a,b)=>b.fecha.localeCompare(a.fecha));
@@ -1356,7 +1356,7 @@ function pdfCrisis(){
   if(meds.length)B.push({h:"Medicamentos actuales",ul:meds.map(m=>`${m.nombre} ${m.dosis} (${m.horas.join(", ")})`)});
   B.push({h:"A quién llamar",ul:[...c.contactos.filter(x=>x.n||x.t).map(x=>`${x.n}: ${x.t}`),"Clínica Reina Elizabeth IPS (citas y orientación, WhatsApp): 312 888 6611","Línea de emergencias: 123"]});
   const ab=buildPDF("Plan de crisis",B);if(!ab){toast("No se pudo generar el PDF.");return;}
-  save_(`Plan-de-crisis-${k.nombre.replace(/[^\wÁÉÍÓÚáéíóúñÑ]+/g,"-")}.pdf`,ab);
+  save_(`Plan-de-crisis-${slugN(k.nombre)}.pdf`,ab);
 }
 function pdfInforme(){
   const k=kid(),s=statsOf(k,30),p=statsOf(k,30,30),ev=S.evol[k.id]||[],u=ev[ev.length-1];
@@ -1370,7 +1370,7 @@ function pdfInforme(){
   if(u)B.push({h:"Última recomendación de la IPS",p:`${fmt(u.fecha)}, ${u.especialidad}: ${u.recomendaciones||u.plan||""}`});
   B.push({small:"Informe generado por la familia con NeuroGuIA. No constituye un diagnóstico clínico."});
   const ab=buildPDF("Informe mensual",B);if(!ab){toast("No se pudo generar el PDF.");return;}
-  save_(`Informe-mensual-${k.nombre.replace(/[^\wÁÉÍÓÚáéíóúñÑ]+/g,"-")}.pdf`,ab);
+  save_(`Informe-mensual-${slugN(k.nombre)}.pdf`,ab);
 }
 function vIps(){
   const k=kid();
@@ -1394,7 +1394,7 @@ function vIps(){
 }
 
 /* ================= Ciclo completo: primeros pasos, metas, asistencia, informes, archivo y 18 años ================= */
-function pasosDe(k){return [["Datos del niño completos (documento, fecha de nacimiento, EPS)",!!(k.documento&&k.fechaNac&&k.eps),"Mi cuenta"],["Plan de crisis",!!(k.crisisPlan?.calma||k.crisisPlan?.pasos),"Plan de crisis"],["Medicamentos (o anotar que no toma)",!!(k.meds.length||k.sinMeds),"Medicamentos"],["Primera evaluación",!!k.eval,"Evaluación"],["Primera meta",!!(k.metas||[]).length,"Metas"],["Invitar a un cuidador o al otro padre",!!((S.cuidSrv||[]).length||(S.cuenta?.cuidadores||[]).length),"Mi cuenta"]];}
+function pasosDe(k){return [["Datos del niño completos (documento, fecha de nacimiento, EPS)",!!(k.documento&&k.fechaNac&&k.eps),"Mi cuenta"],["Plan de crisis",!!(k.crisisPlan?.calma||k.crisisPlan?.pasos),"Plan de crisis"],["Medicamentos (o anotar que no toma)",!!(k.meds.length||k.sinMeds),"Medicamentos"],...((OCULTO[S.cuenta?.plan]||[]).includes("Evaluación")?[]:[["Primera evaluación",!!k.eval,"Evaluación"]]),["Primera meta",!!(k.metas||[]).length,"Metas"],["Invitar a un cuidador o al otro padre",!!((S.cuidSrv||[]).length||(S.cuenta?.cuidadores||[]).length),"Mi cuenta"]];}
 function bloqueInicioExtra(k){
   let out="";const e=edadDe(k.fechaNac);
   if(e!==null&&e>=18)out+=`<div class="alert"><strong>${esc(k.nombre)} ya cumplió 18 años.</strong> Desde ahora la ley lo reconoce como dueño de sus propios datos. Lo correcto es entregarle su historia y, si él o ella lo decide, archivarla o eliminarla. <div class="acciones"><button class="btn" id="pdfExp">Descargar su historia completa (PDF)</button><button class="btn sec" data-arch="${k.id}">Archivar</button></div></div>`;
@@ -1453,6 +1453,7 @@ function pdfEvol(kidNombre,e){
   B.push({small:"Informe de atención de Clínica Reina Elizabeth IPS entregado por NeuroGuIA. La atención consta también en la historia clínica de la IPS."});
   const ab=buildPDF("Informe de atención",B);if(ab)save_(`Informe-atencion-${e.fecha}-${slugN(kidNombre)}.pdf`,ab);
 }
+const horaCO=t=>{try{return new Date(t).toLocaleString("sv-SE",{timeZone:"America/Bogota"}).slice(0,16);}catch(e){return String(t||"").slice(0,16).replace("T"," ");}};
 const slugN=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\w]+/g,"-");
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const k=kid();
   if(b.id==="ocultarPasos"){k.pasosOculto=true;save();render();return;}
@@ -1679,7 +1680,7 @@ function vCom(){
 /* ================= Eventos ================= */
 document.addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const k=kid();
-  if(b.dataset.view){S.view=b.dataset.view;saveUI();render();window.scrollTo(0,0);return;}
+  if(b.dataset.view){document.body.classList.remove("menu-abierto");if(!S.demo&&(OCULTO[S.cuenta?.plan]||[]).includes(b.dataset.view)){S.view="Planes y módulos";saveUI();render();window.scrollTo(0,0);toast(b.dataset.view+" está incluida desde el plan Esencial. Puede cambiar de plan aquí.");return;}S.view=b.dataset.view;saveUI();render();window.scrollTo(0,0);return;}
   if(b.id==="demo"){cargarEjemplo();return;}
   if(b.id==="btnUrg"||b.dataset.urg){document.getElementById("dlgUrg").showModal();return;}
   if(b.id==="btnCrisis"){S.view="Plan de crisis";saveUI();render();window.scrollTo(0,0);return;}
@@ -1791,7 +1792,7 @@ document.getElementById("dlgUrg").addEventListener("close",e=>{if(e.target.retur
 document.addEventListener("click",e=>{
   if(e.target.closest("#btnMenu")){document.body.classList.toggle("menu-abierto");return;}
   if(e.target.id==="velo"||e.target.closest("#menu button")){document.body.classList.remove("menu-abierto");}
-  const ir=e.target.closest("[data-ir]");if(ir){S.view=ir.dataset.ir;saveUI();render();window.scrollTo(0,0);}
+  const ir=e.target.closest("[data-ir]");if(ir){S.view=(!S.demo&&(OCULTO[S.cuenta?.plan]||[]).includes(ir.dataset.ir))?"Diario":ir.dataset.ir;saveUI();render();window.scrollTo(0,0);}
 });
 const vv=id=>document.getElementById(id)?.value?.trim()||"";
 document.addEventListener("click",e=>{
@@ -1876,7 +1877,7 @@ function vSuper(){
   const tab=S.supTab||"Negocio",T=["Negocio","Familias","Cuentas y accesos","Pagos","Profesionales IPS","Respaldo","Bitácora"];
   const tabs=`<div class="chips" style="margin-bottom:1rem">${T.map(t=>`<button class="btn ${tab===t?"":"sec"} small" data-stab="${t}">${t}</button>`).join("")}</div>`;
   const est=e=>e.t==="interna"?"Interna":e.t==="activa"?"Activa":e.t==="prueba"?`En prueba: ${e.dias} días`:e.t==="pendiente"?`Pendiente (cierra ${e.cierra})`:"Cerrada por pago";
-  const titular=fid=>d.usuarios.find(u=>u.familia_id===fid&&u.rol==="titular");
+  const titular=fid=>[...d.usuarios].reverse().find(u=>u.familia_id===fid&&u.rol==="titular");
   if(tab==="Familias")return tabs+`<div class="panel"><h2>Familias (${d.familias.length})</h2><div class="tablewrap"><table><tr><th>Familia</th><th>Plan</th><th>Estado</th><th>Pagado hasta</th><th>Módulos</th><th></th></tr>
    ${d.familias.map(f=>`<tr><td>${esc(f.nombre)}<br><span class="muted" style="font-size:.85rem">${esc(titular(f.id)?.correo||"")}</span></td><td>${esc(f.plan)}</td><td><span class="lvl ${f.estado.t==="cerrada"?"a":f.estado.t==="prueba"||f.estado.t==="pendiente"?"m":"b"}">${est(f.estado)}</span></td><td>${esc(f.pagadoHasta||"—")}</td><td>${Object.keys(f.modulos||{}).join(", ")||"—"}</td>
    <td><button class="btn sec small" data-spag="${f.id}">Pagado hasta</button> <button class="btn sec small" data-sint="${f.id}" data-v="${f.interna?0:1}">${f.interna?"Quitar interna":"Hacer interna"}</button></td></tr>`).join("")}</table></div>
@@ -1884,17 +1885,17 @@ function vSuper(){
   if(tab==="Cuentas y accesos"){const qx=(S.supQ||"").toLowerCase(),L=d.usuarios.filter(u=>!qx||(u.correo+u.nombre+u.rol).toLowerCase().includes(qx));
    return tabs+`<div class="panel"><h2>🔐 Cuentas y accesos</h2><p class="muted">Las contraseñas se guardan cifradas y nadie puede verlas (Ley 1581 de 2012). Desde aquí puede enviar un enlace para crearla o cambiarla, o bloquear una cuenta.</p>
    <div class="row" style="align-items:end"><div><label class="f" for="supQ">Buscar</label><input type="text" id="supQ" value="${esc(S.supQ||"")}" placeholder="Correo, nombre o perfil"></div><div><button class="btn sec" id="supCsv">Descargar CSV</button></div></div>
-   <div class="tablewrap" style="margin-top:.8rem"><table><tr><th>Correo</th><th>Perfil</th><th>Familia</th><th>Contraseña</th><th>Último ingreso</th><th></th></tr>${L.map(u=>`<tr><td>${esc(u.correo)}<br><span class="muted" style="font-size:.85rem">${esc(u.nombre||"")}</span></td><td>${esc({titular:"Titular",cuidador:"Cuidador",ips:"Profesional IPS",super:"Superadministrador"}[u.rol]||u.rol)}</td><td>${esc(d.familias.find(f=>f.id===u.familia_id)?.nombre||"—")}</td><td>${u.con_clave?"Creada":"Pendiente"}</td><td>${u.ultimo_ingreso?esc(u.ultimo_ingreso.slice(0,16).replace("T"," ")):"—"}</td>
+   <div class="tablewrap" style="margin-top:.8rem"><table><tr><th>Correo</th><th>Perfil</th><th>Familia</th><th>Contraseña</th><th>Último ingreso</th><th></th></tr>${L.map(u=>`<tr><td>${esc(u.correo)}<br><span class="muted" style="font-size:.85rem">${esc(u.nombre||"")}</span></td><td>${esc({titular:"Titular",cuidador:"Cuidador",ips:"Profesional IPS",super:"Superadministrador"}[u.rol]||u.rol)}</td><td>${esc(d.familias.find(f=>f.id===u.familia_id)?.nombre||"—")}</td><td>${u.con_clave?"Creada":"Pendiente"}</td><td>${u.ultimo_ingreso?esc(horaCO(u.ultimo_ingreso)):"—"}</td>
    <td><button class="btn sec small" data-senl="${u.id}">Enviar enlace</button> ${u.rol!=="super"?`<button class="btn peligro small" data-sblq="${u.id}" data-v="${u.bloqueado?0:1}">${u.bloqueado?"Desbloquear":"Bloquear"}</button>`:""}${u.bloqueado?`<br><span class="badge">Bloqueada: ${esc(u.motivo_bloqueo||"")}</span>`:""}</td></tr>`).join("")}</table></div></div>`;}
   if(tab==="Pagos")return tabs+`<div class="panel"><h2>Pagos con Bold</h2><div class="acciones"><button class="btn" id="supPrueba">Pago de prueba de $1.000</button></div>
-   <div class="tablewrap" style="margin-top:.8rem"><table><tr><th>Fecha</th><th>Familia</th><th>Concepto</th><th>Valor</th><th>Estado</th></tr>${d.pagos.map(p=>`<tr><td>${esc(p.creado.slice(0,16).replace("T"," "))}</td><td>${esc(d.familias.find(f=>f.id===p.familia_id)?.nombre||p.familia_id)}</td><td>${esc(p.detalle||p.plan)}</td><td>${money(p.valor)}</td><td>${p.estado==="revisar"?`<span class="badge">Para revisar</span> <button class="btn sec small" data-srev="${p.pago_id}">Revisar y aplicar</button>`:"Aplicado"}</td></tr>`).join("")||`<tr><td colspan="5" class="muted">Aún no hay pagos.</td></tr>`}</table></div>
+   <div class="tablewrap" style="margin-top:.8rem"><table><tr><th>Fecha</th><th>Familia</th><th>Concepto</th><th>Valor</th><th>Estado</th></tr>${d.pagos.map(p=>`<tr><td>${esc(horaCO(p.creado))}</td><td>${esc(d.familias.find(f=>f.id===p.familia_id)?.nombre||p.familia_id)}</td><td>${esc(p.detalle||p.plan)}</td><td>${money(p.valor)}</td><td>${p.estado==="revisar"?`<span class="badge">Para revisar</span> <button class="btn sec small" data-srev="${p.pago_id}">Revisar y aplicar</button>`:"Aplicado"}</td></tr>`).join("")||`<tr><td colspan="5" class="muted">Aún no hay pagos.</td></tr>`}</table></div>
    <p class="muted" style="font-size:.88rem">"Para revisar" significa que Bold cobró, pero el valor o el pedido no cuadran. Solo se aplica lo que Bold confirma; el Superadministrador no regala meses ni módulos.</p></div>`;
   if(tab==="Profesionales IPS")return tabs+`<div class="panel"><h2>Profesionales de Clínica Reina Elizabeth</h2><p class="muted">Ven el Panel IPS: solicitudes de las familias, historias que las familias deciden compartir y evoluciones.</p>
    <table>${d.usuarios.filter(u=>u.rol==="ips").map(u=>`<tr><td>${esc(u.nombre||"")}</td><td>${esc(u.correo)}</td><td>${u.con_clave?"Activo":"Invitación enviada"}</td></tr>`).join("")||`<tr><td class="muted">Aún no hay profesionales.</td></tr>`}</table>
    <form id="fSupIps" class="row" style="align-items:end;margin-top:.8rem"><div><label class="f" for="siN">Nombre y especialidad</label><input type="text" id="siN" required></div><div><label class="f" for="siC">Correo</label><input type="email" id="siC" required></div><div><button class="btn">Invitar profesional</button></div></form></div>`;
   if(tab==="Negocio")return tabs+vNegocio(d);
   if(tab==="Respaldo")return tabs+panelManuales()+`<div class="panel"><h2>Respaldo completo</h2><p>Descarga un archivo con todas las familias, sus datos (descifrados), usuarios, pedidos y pagos, para recuperar información si una familia la pierde. Las contraseñas van cifradas: nadie puede leerlas.</p><p class="muted">Guárdelo en un lugar seguro: contiene datos de salud de menores.</p><div class="acciones"><button class="btn" id="supResp">Descargar respaldo</button></div></div>`;
-  return tabs+`<div class="panel"><h2>Bitácora</h2><div class="tablewrap"><table>${d.bitacora.map(b=>`<tr><td>${esc(b.fecha.slice(0,16).replace("T"," "))}</td><td>${esc(b.quien||"")}</td><td>${esc(b.accion||"")}</td><td>${esc(b.detalle||"")}</td></tr>`).join("")}</table></div></div>`;
+  return tabs+`<div class="panel"><h2>Bitácora</h2><div class="tablewrap"><table>${d.bitacora.map(b=>`<tr><td>${esc(horaCO(b.fecha))}</td><td>${esc(b.quien||"")}</td><td>${esc(b.accion||"")}</td><td>${esc(b.detalle||"")}</td></tr>`).join("")}</table></div></div>`;
 }
 async function supAccion(p,body,msg){try{await api("POST",p,body);toast(msg);await cargarSuper();}catch(e){toast(e.message,1);}}
 document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
