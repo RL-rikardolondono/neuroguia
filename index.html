@@ -235,6 +235,18 @@ body.con-demo main{padding-bottom:7rem}
   .stat{grid-template-columns:repeat(2,minmax(0,1fr))}
   .top select{max-width:150px}
 }
+@media (max-width:600px){
+  .top{gap:.35rem .4rem;padding:.4rem .6rem}
+  .brand{font-size:1.35rem;gap:.4rem}.brand svg{width:30px;height:30px}.brand small{display:none}
+  .top label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .top .grp{flex:1 1 40%}.top select{max-width:none;width:100%;padding:.3rem .4rem;font-size:.92rem}
+  #btnMenu,.btn-cri,.btn-urg,.btn-salir,.btn-add{padding:.35rem .6rem!important;font-size:.9rem!important;min-height:0}
+  #toast{top:auto!important;bottom:calc(1rem + env(safe-area-inset-bottom,0px))!important;font-size:1rem;padding:.7rem 1rem}
+  body:has(#demoBar:not([hidden])) #toast{bottom:calc(4.4rem + env(safe-area-inset-bottom,0px))!important}
+  #demoBar{padding:.4rem .5rem calc(.4rem + env(safe-area-inset-bottom,0px));gap:.35rem;flex-wrap:nowrap}
+  #demoBar span,#demoBar [data-view],#demoBar a{display:none}
+  #demoBar .btn{padding:.4rem .7rem;font-size:.9rem;white-space:nowrap}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{.top,nav.tabs,.notice,.noprint,#toast{display:none!important}body{background:#fff}main{padding:0}.panel{border:0}}
 </style>
@@ -280,6 +292,13 @@ body.con-demo main{padding-bottom:7rem}
   </div>
 </form></dialog>
 
+<dialog id="dlgElim"><form method="dialog">
+  <h2>Eliminar la cuenta</h2>
+  <p>Esto borra la cuenta, los hijos, los cuidadores y todos los registros. <strong>No se puede deshacer.</strong> Si quiere una copia, primero use «Descargar todos mis datos».</p>
+  <label class="f" for="elClave">Su contraseña</label><input type="password" id="elClave" autocomplete="current-password">
+  <label class="f" for="elConf" style="margin-top:.6rem">Para confirmar, escriba ELIMINAR</label><input type="text" id="elConf" autocomplete="off" autocapitalize="characters">
+  <div class="acciones"><button class="btn sec" value="cancel" formnovalidate>Cancelar</button><button class="btn peligro" value="ok">Eliminar todo</button></div>
+</form></dialog>
 <dialog id="dlgPin"><form method="dialog" id="formPin">
   <h2>Clave del titular</h2>
   <p class="muted">Para entrar como titular escriba la clave de 4 dígitos.</p>
@@ -411,9 +430,10 @@ async function descargarManual(t){try{const r=await fetch(API+"/api/manual/"+t,{
 document.addEventListener("click",e=>{const b=e.target.closest("[data-manual]");if(b)descargarManual(b.dataset.manual);});
 document.addEventListener("click",async e=>{const b=e.target.closest("#misDatos,#elimCuenta");if(!b)return;
   if(b.id==="misDatos"){try{const r=await fetch(API+"/api/mis-datos",{headers:{authorization:"Bearer "+TOK}});if(!r.ok)throw new Error();await save_(`NeuroGuIA-mis-datos-${hoy()}.json`,await r.blob());}catch(er){toast("No se pudieron descargar sus datos",1);}return;}
-  const cl=prompt("Esto borra la cuenta, los hijos, los cuidadores y todos los registros. No se puede deshacer.\n\nEscriba su contraseña para continuar:");if(!cl)return;
-  const cf=prompt("Para confirmar, escriba ELIMINAR en mayúsculas:");if(cf!=="ELIMINAR"){toast("No se eliminó la cuenta",1);return;}
-  try{await api("POST","/api/eliminar-cuenta",{clave:cl,confirmar:cf});TOK=null;try{localStorage.removeItem("ng:tok");}catch(er){}alert("Su cuenta y todos sus datos fueron eliminados.");location.replace(location.pathname);}catch(er){toast(er.message,1);}});
+  const dl=document.getElementById("dlgElim");document.getElementById("elClave").value="";document.getElementById("elConf").value="";dl.showModal();});
+document.getElementById("dlgElim").addEventListener("close",async e=>{if(e.target.returnValue!=="ok")return;const cl=document.getElementById("elClave").value,cf=document.getElementById("elConf").value.trim();
+  if(!cl){toast("Escriba su contraseña para eliminar la cuenta",1);return;}if(cf!=="ELIMINAR"){toast("No se eliminó la cuenta: escriba ELIMINAR en mayúsculas",1);return;}
+  try{await api("POST","/api/eliminar-cuenta",{clave:cl,confirmar:cf});TOK=null;try{localStorage.removeItem("ng:tok");}catch(er){}S.sesion=false;S.ent="inicio";render();toast("Su cuenta y todos sus datos fueron eliminados.");setTimeout(()=>location.replace(location.pathname),2500);}catch(er){toast(er.message,1);}});
 async function cargarContenido(){if(!SRV||S.demo||!SES?.familia)return;for(const [m,arr] of [["sim",CASOS],["hist",HIST]]){if(!tieneMod(m)||S["cont_"+m])continue;try{const d=await api("GET","/api/contenido/"+m);if(Array.isArray(d)&&d.length){arr.splice(0,arr.length,...d);S["cont_"+m]=true;}}catch(e){}}if(["Simulador","Historias sociales"].includes(S.view))render();}
 async function cargarCuidadores(){if(!SRV||!SES?.familia)return;try{S.cuidSrv=await api("GET","/api/cuidadores");}catch(e){S.cuidSrv=[];}if(S.view==="Mi cuenta")render();}
 async function pagarSrv(p){
@@ -531,11 +551,11 @@ async function init(){
   if(SRV){
     if(location.hash.startsWith("#docente=")){S.docenteTok=location.hash.slice(9);S.mode="nube";render();cargarDocentePublico();return;}
     if(location.hash==="#privacidad")S.legalVer="politica";if(location.hash==="#terminos")S.legalVer="terminos";
-    {const q=new URLSearchParams(location.search.slice(1)+"&"+location.hash.replace(/^#(registro)?&?/,""));const pm={basico:"Básico",esencial:"Esencial",premium:"Premium",plus:"Premium Plus"}[(q.get("plan")||"").toLowerCase()];const md=(q.get("mods")||"").split(",").filter(id=>MODS.some(m=>m.id===id));if(pm||md.length||location.hash.startsWith("#registro")){S.prePlan=pm||null;S.preMods=md;if(!TOK)S.ent="crear";history.replaceState(null,"",location.pathname);}}
+    {const q=new URLSearchParams(location.search.slice(1)+"&"+location.hash.replace(/^#(registro)?&?/,""));const pm={basico:"Básico",esencial:"Esencial",premium:"Premium",plus:"Premium Plus"}[(q.get("plan")||"").toLowerCase()];const md=(q.get("mods")||"").split(",").filter(id=>MODS.some(m=>m.id===id));if(location.hash==="#demo"){S.irDemo=true;history.replaceState(null,"",location.pathname);}if(pm||md.length||location.hash.startsWith("#registro")){S.prePlan=pm||null;S.preMods=md;if(!TOK)S.ent="crear";history.replaceState(null,"",location.pathname);}}
     if(location.hash.startsWith("#clave=")){S.claveTok=location.hash.slice(7);history.replaceState(null,"",location.pathname);S.ent="nuevaClave";}
     if(TOK){try{SES=await api("GET","/api/sesion");db=shimDB;user=shimUser;}catch(e){SES=null;}}
     try{if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js");}catch(e){}
-    if(!SES){S.mode="nube";S.sesion=false;render();return;}
+    if(!SES){S.mode="nube";S.sesion=false;render();if(S.irDemo){S.irDemo=false;entrarDemo();}return;}
     if(SES.usuario.rol==="super"){S.mode="nube";S.sesion=true;S.superMode=true;render();cargarSuper();return;}
   }
   try{uid=user?await user.id():null;}catch(e){}
@@ -672,7 +692,7 @@ function vEntrada(){
     <label class="f" for="lgP" style="margin-top:.7rem">Contraseña</label>${ojo("lgP")}
     <div class="acciones"><button class="btn" ${bl?"disabled":""}>Ingresar</button></div></form>
     <button class="enlace" data-ent="olvido">¿Olvidó su contraseña?</button>
-    <div class="sep">o</div><div class="acciones" style="margin-top:0"><button class="btn sec" data-ent="crear">Crear una cuenta</button><button class="btn azul" id="entDemo">Probar la demostración</button></div>`+pie;}
+    <div class="sep">o</div><div class="acciones" style="margin-top:0"><button class="btn sec" data-ent="crear">Crear una cuenta</button></div>`+pie;}
   if(e==="olvido")return cab+`<button class="volver" data-ent="login">← Volver a ingresar</button><h2>Recuperar la contraseña</h2>
     <p>Escriba su correo. Si está registrado, le enviaremos un enlace para crear una contraseña nueva; sirve una sola vez y vence en 1 hora.</p>
     <form id="fOlvido"><label class="f" for="olC">Correo</label><input type="email" id="olC" required><div class="acciones"><button class="btn">Enviar enlace</button><button type="button" class="btn sec" data-ent="login">Cancelar</button></div></form>`+pie;
@@ -744,7 +764,7 @@ function pagarMensualidad(){if(SRV&&!S.demo&&playVig()){toast("Su mensualidad se
   const m=datosMensualidad();abrirPago("mensualidad",m.pl.v,`Mensualidad del plan <strong>${m.pl.n}</strong>. Con este pago queda al día hasta el <strong>${fmtL(m.hasta)}</strong>.`);S.pagoPend={tipo:"mensualidad",valor:m.pl.v,hasta:m.hasta};}
 function bannerCobro(){if(!isTit()||S.demo)return "";const e=estadoCuenta();if(e.interna)return "";
   if(e.t==="prueba")return `<div class="adj noprint" style="border-color:#14A38B;background:#E3F6F2;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between"><span>🎁 <strong>Prueba gratis: ${e.dias===1?"hoy es el último día":"quedan "+e.dias+" días"}</strong> (hasta el ${fmtL(e.hasta)}). Si no paga, la cuenta se cierra al terminar; sus datos se conservan.</span><button class="btn small" id="pagarMes">Pagar mi plan</button></div>`;
-  if(e.t==="pendiente")return `<div class="alert noprint"><strong>Su mensualidad está pendiente.</strong> Pague antes del ${fmtL(e.cierra)} para que la cuenta no se cierre. <button class="btn small" id="pagarMes">Pagar ahora</button></div>`;
+  if(e.t==="pendiente"){const d=Math.max(1,Math.round((new Date(e.cierra+"T12:00")-new Date(hoy()+"T12:00"))/864e5)+1);return `<div class="alert noprint" style="border-color:#C0392B;background:#FDECEA"><strong style="color:#C0392B">⚠️ Su mensualidad está pendiente: ${d===1?"hoy es el último día":"quedan "+d+" días"}.</strong> El ${fmtL(e.cierra)} a medianoche la cuenta se cierra hasta que se pague; sus datos se conservan. <div class="acciones" style="margin-top:.5rem"><button class="btn small" id="pagarMes">Pagar ahora</button><a class="btn small" style="background:#1F8A4C;color:#fff;text-decoration:none" href="https://wa.me/573044375758?text=Hola%2C%20necesito%20ayuda%20con%20el%20pago%20de%20NeuroGuIA" target="_blank" rel="noopener">Soporte por WhatsApp</a></div></div>`;}
   return "";}
 function vCerrada(){const pl=PLANES.find(p=>p.n===S.cuenta.plan)||PLANES[0],c=S.cuenta;
   if(!isTit())return `<div class="entrada" style="max-width:520px"><h1>🔒 La cuenta no está disponible</h1><p>Por ahora no se puede usar NeuroGuIA en esta familia. Comuníquese con el titular de la cuenta.</p><div class="acciones"><button class="btn sec" id="btnSalir2">Salir</button></div></div>`;
@@ -1411,6 +1431,7 @@ function vMetas(){
   return `<div class="panel c2"><h2><span class="ic">🏁</span>Metas de ${esc(k.nombre.split(" ")[0])}</h2><p class="muted">Pocas metas, concretas y medibles. Por ejemplo: "Pedir ayuda con palabras en 4 de 5 ocasiones". La IPS también puede proponerlas en sus notas.</p>
    ${M.length?M.map(m=>`<div class="adj"><div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap"><strong>${esc(m.texto)}</strong><span class="muted" style="font-size:.85rem">${esc(m.origen||"Familia")} · desde ${fmtL(m.fecha)}</span></div>
     <div class="chips" style="margin-top:.5rem">${EST_META.map(s=>`<button class="btn ${m.estado===s?"":"sec"} small" data-meta="${m.id}" data-est="${s}">${s==="Logrado"?"🏆 ":""}${s}</button>`).join("")}<button class="btn peligro small" data-metadel="${m.id}">Quitar</button></div>${m.logrado?`<p class="muted" style="font-size:.85rem;margin:.4rem 0 0">Logrado el ${fmtL(m.logrado)} 🎉</p>`:""}</div>`).join(""):`<p class="empty">Aún no hay metas.</p>`}
+   ${(()=>{if(!isTit())return "";const ya=new Set(M.map(m=>m.texto));const P=[...new Set((S.evol?.[k.id]||[]).flatMap(e=>String(e.metas||"").split("\n").map(x=>x.trim()).filter(Boolean)))].filter(t=>!ya.has(t));return P.length?`<div class="adj" style="background:#E8F1FA;border-color:#0B4F8A"><strong>🩺 Metas propuestas por la IPS</strong><ul style="margin:.4rem 0 0">${P.map(t=>`<li style="margin:.3rem 0">${esc(t)} <button class="btn sec small" data-addmeta="${esc(t)}" data-kid="${esc(k.id)}">Agregar a mis metas</button></li>`).join("")}</ul></div>`:"";})()}
    ${isTit()?`<form id="fMeta" class="row" style="align-items:end;margin-top:.8rem"><div><label class="f" for="mtT">Nueva meta</label><input type="text" id="mtT" required placeholder="Ej. Dormir antes de las 9 p. m. 5 noches por semana"></div><div><button class="btn">Agregar meta</button></div></form>`:""}</div>`;
 }
 function asistenciaDe(k,dias){let a=0,f=0;const [d0]=rango(dias);(k.recs||[]).filter(r=>/Terapia|Cita/.test(r.tipo)).forEach(r=>{a+=(r.hechos||[]).filter(x=>x>=d0).length;f+=(r.faltas||[]).filter(x=>x>=d0).length;});return {a,f,pct:a+f?Math.round(a/(a+f)*100):null};}
